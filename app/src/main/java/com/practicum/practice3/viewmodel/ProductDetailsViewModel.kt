@@ -1,9 +1,10 @@
 package com.practicum.practice3.viewmodel
 
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.practicum.practice3.dto.Product
+import com.practicum.practice3.domain.model.Product
+import com.practicum.practice3.domain.model.Resource
+import com.practicum.practice3.domain.usecase.GetProductByCodeUseCase
 import com.practicum.practice3.storage.ProductRepository
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,29 +27,28 @@ sealed interface ProductDetailsUiEvent {
 
 
 class ProductDetailsViewModel(
-    private val repository: ProductRepository,
+    private val getProductByCodeUseCase: GetProductByCodeUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProductDetailsUiState())
     val uiState: StateFlow<ProductDetailsUiState> = _uiState.asStateFlow()
 
     fun loadProduct(productCode: String) {
-        _uiState.update { it.copy(isLoading = true, errorMessage = null, product = null) }
 
         viewModelScope.launch {
-            try {
-                delay(500)
+            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
 
-                val product = repository.getProductByCode(productCode)
-                if (product != null) {
-                    _uiState.update { it.copy(isLoading = false, product = product) }
-                } else {
-                    _uiState.update { it.copy(isLoading = false, errorMessage = "Продукт не найден") }
+            val result = getProductByCodeUseCase(productCode)
+
+            when (result) {
+                is Resource.Success -> {
+                    _uiState.update { it.copy(isLoading = false, product = result.data) }
                 }
-            } catch (e: Exception) {
-                _uiState.update { it.copy(isLoading = false, errorMessage = "Ошибка загрузки: ${e.message}") }
+                is Resource.Error -> {
+                    _uiState.update { it.copy(isLoading = false, errorMessage = result.message) }
+                }
+                is Resource.Loading -> {  }
             }
         }
     }
-
 }

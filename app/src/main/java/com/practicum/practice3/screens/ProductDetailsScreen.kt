@@ -54,8 +54,8 @@ import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
-import com.practicum.practice3.dto.Nutriments
-import com.practicum.practice3.dto.Product
+import com.practicum.practice3.domain.model.Nutriments
+import com.practicum.practice3.domain.model.Product
 import com.practicum.practice3.storage.MockProductRepository
 import com.practicum.practice3.viewmodel.ProductDetailsViewModel
 import com.practicum.practice3.viewmodel.ProductDetailsViewModelFactory
@@ -64,9 +64,7 @@ import com.practicum.practice3.viewmodel.ProductDetailsViewModelFactory
 fun ProductDetailsScreen(
     productCode: String,
     onNavigateBack: () -> Unit,
-    viewModel: ProductDetailsViewModel = viewModel(
-        factory = ProductDetailsViewModelFactory(MockProductRepository)
-    )
+    viewModel: ProductDetailsViewModel = viewModel(factory = ProductDetailsViewModelFactory()),
 ) {
     val state by viewModel.uiState.collectAsState()
 

@@ -1,4 +1,4 @@
-package com.practicum.practice3.dto
+package com.practicum.practice3.domain.model
 
 data class Nutriments(
     val energyKcal: Double,

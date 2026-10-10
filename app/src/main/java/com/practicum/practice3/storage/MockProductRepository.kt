@@ -1,7 +1,7 @@
 package com.practicum.practice3.storage
 
-import com.practicum.practice3.dto.Nutriments
-import com.practicum.practice3.dto.Product
+import com.practicum.practice3.domain.model.Nutriments
+import com.practicum.practice3.domain.model.Product
 
 
 interface ProductRepository {

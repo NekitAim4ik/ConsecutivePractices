@@ -1,4 +1,4 @@
-package com.practicum.practice3.dto
+package com.practicum.practice3.domain.model
 
 data class Product(
     val code: String,
