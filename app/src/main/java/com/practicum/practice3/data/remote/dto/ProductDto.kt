@@ -8,6 +8,7 @@ data class ProductDto(
     @SerializedName("brands") val brands: String?,
     @SerializedName("quantity") val quantity: String?,
     @SerializedName("image_front_url") val imageFrontUrl: String?,
+    @SerializedName("image_url") val imageUrl: String?,
     @SerializedName("nutriscore_grade") val nutriscoreGrade: String?,
     @SerializedName("ecoscore_grade") val ecoscoreGrade: String?,
     @SerializedName("categories_tags") val categoriesTags: List<String>?,

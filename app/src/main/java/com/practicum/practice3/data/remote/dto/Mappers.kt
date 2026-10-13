@@ -3,18 +3,32 @@ package com.practicum.practice3.data.remote.dto
 import com.practicum.practice3.domain.model.Nutriments
 import com.practicum.practice3.domain.model.Product
 
+
+private fun String?.toValidGrade(): String? {
+    return this?.lowercase()?.takeIf { it in listOf("a", "b", "c", "d", "e") }
+}
+
+private fun cleanTag(tag: String): String {
+    return tag.removePrefix("en:")
+        .removePrefix("fr:")
+        .removePrefix("ru:")
+        .replace("-", " ")
+        .replace("_", " ")
+        .replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+}
+
 fun ProductDto.toDomain(): Product {
     return Product(
         code = code.orEmpty(),
         productName = productName ?: "Без названия",
         brands = brands ?: "Неизвестный бренд",
         quantity = quantity ?: "",
-        imageUrl = imageFrontUrl ?: "",
-        nutriscoreGrade = nutriscoreGrade,
-        ecoscoreGrade = ecoscoreGrade,
-        categories = categoriesTags ?: emptyList(),
-        ingredientsText = ingredientsText ?: "",
-        allergens = allergensTags?.map { it.removePrefix("en:") } ?: emptyList(),
+        imageUrl = (imageFrontUrl ?: imageUrl)?.takeIf { it.isNotBlank() } ?: "",
+        nutriscoreGrade = nutriscoreGrade.toValidGrade(),
+        ecoscoreGrade = ecoscoreGrade.toValidGrade(),
+        categories = categoriesTags?.map { cleanTag(it) } ?: emptyList(),
+        ingredientsText = ingredientsText ?: "Состав не указан",
+        allergens = allergensTags?.map { cleanTag(it) } ?: emptyList(),
         nutriments = nutriments?.toDomain() ?: Nutriments(0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
     )
 }

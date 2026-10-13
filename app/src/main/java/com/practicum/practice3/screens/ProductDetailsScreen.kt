@@ -371,7 +371,9 @@ private fun NutritionTable(nutriments: Nutriments) {
             Spacer(modifier = Modifier.height(16.dp))
 
             ConstraintLayout(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(360.dp)
             ) {
 
                 val (calories, fat, carbs, sugars, proteins, salt) = createRefs()

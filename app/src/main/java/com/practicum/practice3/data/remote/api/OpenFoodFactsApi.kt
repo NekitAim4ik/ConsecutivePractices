@@ -16,12 +16,14 @@ interface OpenFoodFactsApi {
         @Query("page_size") pageSize: Int = 20,
         @Query("page") page: Int = 1,
         @Query("categories_tags_en") categories: String? = null,
-        @Query("sort_by") sortBy: String = "popularity_key"
+        @Query("sort_by") sortBy: String = "popularity_key",
+
+        @Query("fields") fields: String = "code,product_name,brands,quantity,image_front_url,image_url,nutriscore_grade,ecoscore_grade,categories_tags,ingredients_text,allergens_tags,nutriments"
     ): SearchResponseDto
 
     @GET("api/v3/product/{code}")
     suspend fun getProductByCode(
         @Path("code") code: String,
-        @Query("fields") fields: String = "code,product_name,brands,quantity,image_front_url,nutriscore_grade,ecoscore_grade,categories_tags,ingredients_text,allergens_tags,nutriments"
+        @Query("fields") fields: String = "code,product_name,brands,quantity,image_front_url,image_url,nutriscore_grade,ecoscore_grade,categories_tags,ingredients_text,allergens_tags,nutriments"
     ): ProductResponseDto
 }
