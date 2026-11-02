@@ -16,6 +16,7 @@ interface OpenFoodFactsApi {
         @Query("page_size") pageSize: Int = 20,
         @Query("page") page: Int = 1,
         @Query("categories_tags_en") categories: String? = null,
+        @Query("search_terms") searchTerms: String? = null,
         @Query("sort_by") sortBy: String = "popularity_key",
 
         @Query("fields") fields: String = "code,product_name,brands,quantity,image_front_url,image_url,nutriscore_grade,ecoscore_grade,categories_tags,ingredients_text,allergens_tags,nutriments"
