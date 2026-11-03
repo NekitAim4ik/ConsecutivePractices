@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Home
@@ -84,12 +85,17 @@ fun MainScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = if (currentRoute == Screen.Filters.route) "Фильтры" else "Open Food Facts",
+                        text = when (currentRoute) {
+                            Screen.Filters.route -> "Фильтры"
+                            Screen.Profile.route -> "Профиль"
+                            Screen.EditProfile.route -> "Редактирование профиля"
+                            else -> "Open Food Facts"
+                        },
                         fontWeight = FontWeight.Bold
                     )
                 },
                 navigationIcon = {
-                    if (currentRoute == Screen.Filters.route) {
+                    if (currentRoute == Screen.Filters.route || currentRoute == Screen.EditProfile.route) {
                         IconButton(onClick = { navController.popBackStack() }) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -99,6 +105,14 @@ fun MainScreen(
                     }
                 },
                 actions = {
+                    if (currentRoute == Screen.Profile.route) {
+                        IconButton(onClick = { navController.navigate(Screen.EditProfile.route) }) {
+                            Icon(
+                                imageVector = Icons.Filled.Edit,
+                                contentDescription = "Редактировать профиль"
+                            )
+                        }
+                    }
                     if (currentRoute == Screen.Home.route) {
                         IconButton(onClick = { navController.navigate(Screen.Filters.route) }) {
                             BadgedBox(badge = { if (isBadgeVisible) Badge() }) {
@@ -191,10 +205,11 @@ fun MainScreen(
             }
 
             composable(Screen.Profile.route) {
-                PlaceholderScreen(
-                    title = "Профиль",
-                    subtitle = "Настройки и информация"
-                )
+                ProfileScreen()
+            }
+
+            composable(Screen.EditProfile.route) {
+                EditProfileScreen(onNavigateBack = { navController.popBackStack() })
             }
         }
     }
