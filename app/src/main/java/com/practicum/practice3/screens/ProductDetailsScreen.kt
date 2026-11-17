@@ -20,6 +20,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.BakeryDining
 import androidx.compose.material.icons.filled.Cake
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.RestaurantMenu
@@ -43,6 +45,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
@@ -52,19 +55,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
-import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import com.practicum.practice3.domain.model.Nutriments
 import com.practicum.practice3.domain.model.Product
-import com.practicum.practice3.storage.MockProductRepository
+import com.practicum.practice3.ui.model.GradeUi
 import com.practicum.practice3.viewmodel.ProductDetailsViewModel
-import com.practicum.practice3.viewmodel.ProductDetailsViewModelFactory
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun ProductDetailsScreen(
     productCode: String,
     onNavigateBack: () -> Unit,
-    viewModel: ProductDetailsViewModel = viewModel(factory = ProductDetailsViewModelFactory()),
+    viewModel: ProductDetailsViewModel = koinViewModel(),
 ) {
     val state by viewModel.uiState.collectAsState()
 
@@ -87,17 +89,24 @@ fun ProductDetailsScreen(
 
             ProductDetailsContent(
                 product = state.product!!,
-                onBackClick = onNavigateBack
+                nutriscore = state.nutriscore,
+                ecoscore = state.ecoscore,
+                isFavorite = state.isFavorite,
+                onBackClick = onNavigateBack,
+                onFavoriteClick = viewModel::onFavoriteClicked
             )
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProductDetailsContent(
     product: Product,
-    onBackClick: () -> Unit
+    nutriscore: GradeUi?,
+    ecoscore: GradeUi?,
+    isFavorite: Boolean,
+    onBackClick: () -> Unit,
+    onFavoriteClick: () -> Unit
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize()
@@ -115,7 +124,7 @@ fun ProductDetailsContent(
                     modifier = Modifier
                         .fillMaxSize()
                         .background(
-                            brush = androidx.compose.ui.graphics.Brush.verticalGradient(
+                            brush = Brush.verticalGradient(
                                 colors = listOf(
                                     Color.Black.copy(alpha = 0.4f),
                                     Color.Transparent,
@@ -136,6 +145,24 @@ fun ProductDetailsContent(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Назад",
                         tint = Color.Black
+                    )
+                }
+
+                IconButton(
+                    onClick = onFavoriteClick,
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .align(Alignment.TopEnd)
+                        .background(Color.White.copy(alpha = 0.8f), CircleShape)
+                ) {
+                    Icon(
+                        imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                        contentDescription = if (isFavorite) {
+                            "Убрать из избранного"
+                        } else {
+                            "Добавить в избранное"
+                        },
+                        tint = if (isFavorite) Color.Red else Color.Black
                     )
                 }
 
@@ -170,19 +197,11 @@ fun ProductDetailsContent(
                     .padding(horizontal = 16.dp, vertical = 12.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                if (product.nutriscoreGrade != null) {
-                    ScoreBadge(
-                        label = "Nutri-Score",
-                        grade = product.nutriscoreGrade,
-                        color = getNutriscoreColor(product.nutriscoreGrade)
-                    )
+                if (nutriscore != null) {
+                    ScoreBadge(label = "Nutri-Score", grade = nutriscore)
                 }
-                if (product.ecoscoreGrade != null) {
-                    ScoreBadge(
-                        label = "Eco-Score",
-                        grade = product.ecoscoreGrade,
-                        color = getNutriscoreColor(product.ecoscoreGrade)
-                    )
+                if (ecoscore != null) {
+                    ScoreBadge(label = "Eco-Score", grade = ecoscore)
                 }
                 if (product.quantity.isNotBlank()) {
                     Surface(
@@ -219,7 +238,7 @@ fun ProductDetailsContent(
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.height(8.dp))
-                    androidx.compose.foundation.layout.FlowRow(
+                    FlowRow(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
@@ -283,10 +302,10 @@ fun ProductDetailsContent(
 }
 
 @Composable
-private fun ScoreBadge(label: String, grade: String, color: Color) {
+private fun ScoreBadge(label: String, grade: GradeUi) {
     Surface(
         shape = RoundedCornerShape(12.dp),
-        color = color,
+        color = grade.color,
         modifier = Modifier
     ) {
         Column(
@@ -300,7 +319,7 @@ private fun ScoreBadge(label: String, grade: String, color: Color) {
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = grade.uppercase(),
+                text = grade.letter,
                 style = MaterialTheme.typography.headlineMedium,
                 color = Color.White,
                 fontWeight = FontWeight.Bold
@@ -534,16 +553,5 @@ private fun NutritionCell(
                 )
             }
         }
-    }
-}
-
-private fun getNutriscoreColor(grade: String): Color {
-    return when (grade.lowercase()) {
-        "a" -> Color(0xFF038141)
-        "b" -> Color(0xFF85BB2F)
-        "c" -> Color(0xFFFECB02)
-        "d" -> Color(0xFFEE8100)
-        "e" -> Color(0xFFE63E11)
-        else -> Color.Gray
     }
 }
