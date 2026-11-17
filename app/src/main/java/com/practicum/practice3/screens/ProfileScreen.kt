@@ -94,6 +94,15 @@ fun ProfileScreen(
             )
         }
 
+        if (profile.lessonTime.isNotBlank()) {
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = "Любимая пара: ${profile.lessonTime}",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
         if (profile.resumeUrl.isNotBlank()) {
             Spacer(Modifier.height(24.dp))
             Button(

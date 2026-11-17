@@ -35,7 +35,8 @@ class ProfileRepositoryImpl(
                 fullName = prefs[FULL_NAME].orEmpty(),
                 position = prefs[POSITION].orEmpty(),
                 avatarUri = prefs[AVATAR_URI],
-                resumeUrl = prefs[RESUME_URL].orEmpty()
+                resumeUrl = prefs[RESUME_URL].orEmpty(),
+                lessonTime = prefs[LESSON_TIME].orEmpty()
             )
         }
 
@@ -45,6 +46,7 @@ class ProfileRepositoryImpl(
             prefs.setOrRemove(POSITION, profile.position.trim())
             prefs.setOrRemove(AVATAR_URI, profile.avatarUri)
             prefs.setOrRemove(RESUME_URL, profile.resumeUrl.trim())
+            prefs.setOrRemove(LESSON_TIME, profile.lessonTime.trim())
         }
         deleteUnusedAvatars(keepUri = profile.avatarUri)
     }
@@ -91,5 +93,6 @@ class ProfileRepositoryImpl(
         val POSITION = stringPreferencesKey("position")
         val AVATAR_URI = stringPreferencesKey("avatar_uri")
         val RESUME_URL = stringPreferencesKey("resume_url")
+        val LESSON_TIME = stringPreferencesKey("lesson_time")
     }
 }

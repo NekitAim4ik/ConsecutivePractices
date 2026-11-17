@@ -2,8 +2,11 @@ package com.practicum.practice3.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.practicum.practice3.domain.model.LessonTime
 import com.practicum.practice3.domain.model.Profile
+import com.practicum.practice3.domain.model.Resource
 import com.practicum.practice3.domain.repository.ProfileRepository
+import com.practicum.practice3.domain.usecase.SaveProfileUseCase
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -20,8 +23,18 @@ data class EditProfileUiState(
     val position: String = "",
     val avatarUri: String? = null,
     val resumeUrl: String = "",
+    val lessonTime: String = "",
+    val lessonTimeError: String? = validateLessonTime(""),
     val isLoading: Boolean = true
-)
+) {
+    val canSave: Boolean get() = !isLoading && lessonTimeError == null
+}
+
+private fun validateLessonTime(text: String): String? = when {
+    text.isBlank() -> "Укажите время пары"
+    LessonTime.parse(text) == null -> "Время должно быть в формате HH:mm"
+    else -> null
+}
 
 sealed interface EditProfileEvent {
     data class LaunchCamera(val photoUri: String) : EditProfileEvent
@@ -30,7 +43,8 @@ sealed interface EditProfileEvent {
 }
 
 class EditProfileViewModel(
-    private val profileRepository: ProfileRepository
+    private val profileRepository: ProfileRepository,
+    private val saveProfileUseCase: SaveProfileUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(EditProfileUiState())
@@ -50,6 +64,8 @@ class EditProfileViewModel(
                     position = saved.position,
                     avatarUri = saved.avatarUri,
                     resumeUrl = saved.resumeUrl,
+                    lessonTime = saved.lessonTime,
+                    lessonTimeError = validateLessonTime(saved.lessonTime),
                     isLoading = false
                 )
             }
@@ -62,7 +78,14 @@ class EditProfileViewModel(
 
     fun onResumeUrlChanged(value: String) = _uiState.update { it.copy(resumeUrl = value) }
 
-    /** Фото выбрано в галерее (Photo Picker). */
+    fun onLessonTimeChanged(value: String) = _uiState.update {
+        it.copy(lessonTime = value, lessonTimeError = validateLessonTime(value))
+    }
+
+    fun onLessonTimePicked(hour: Int, minute: Int) {
+        onLessonTimeChanged(LessonTime(hour, minute).format())
+    }
+
     fun onAvatarPicked(sourceUri: String) {
         importAvatar(sourceUri)
     }
@@ -89,16 +112,23 @@ class EditProfileViewModel(
 
     fun onApplyClicked() {
         val state = _uiState.value
+        if (!state.canSave) return
+
         viewModelScope.launch {
-            profileRepository.save(
+            val result = saveProfileUseCase(
                 Profile(
                     fullName = state.fullName,
                     position = state.position,
                     avatarUri = state.avatarUri,
-                    resumeUrl = state.resumeUrl
+                    resumeUrl = state.resumeUrl,
+                    lessonTime = state.lessonTime
                 )
             )
-            _events.send(EditProfileEvent.Applied)
+            when (result) {
+                is Resource.Success -> _events.send(EditProfileEvent.Applied)
+                is Resource.Error -> _events.send(EditProfileEvent.ShowMessage(result.message))
+                is Resource.Loading -> Unit
+            }
         }
     }
 

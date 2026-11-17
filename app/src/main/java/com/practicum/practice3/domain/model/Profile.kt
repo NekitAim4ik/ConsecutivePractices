@@ -4,5 +4,6 @@ data class Profile(
     val fullName: String = "",
     val position: String = "",
     val avatarUri: String? = null,
-    val resumeUrl: String = ""
+    val resumeUrl: String = "",
+    val lessonTime: String = ""
 )

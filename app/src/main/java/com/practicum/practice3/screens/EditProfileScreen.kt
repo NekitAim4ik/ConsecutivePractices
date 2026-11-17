@@ -1,6 +1,9 @@
 package com.practicum.practice3.screens
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -20,11 +23,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -41,6 +46,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
+import com.practicum.practice3.domain.model.LessonTime
 import com.practicum.practice3.viewmodel.EditProfileEvent
 import com.practicum.practice3.viewmodel.EditProfileViewModel
 import org.koin.compose.viewmodel.koinViewModel
@@ -54,6 +61,7 @@ fun EditProfileScreen(
     val state by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     var showSourceDialog by rememberSaveable { mutableStateOf(false) }
+    var showTimePicker by rememberSaveable { mutableStateOf(false) }
 
     // Photo Picker не требует runtime-разрешений.
     val pickPhoto = rememberLauncherForActivityResult(
@@ -68,6 +76,34 @@ fun EditProfileScreen(
         ActivityResultContracts.TakePicture()
     ) { success ->
         viewModel.onCameraResult(success)
+    }
+
+    // На Android 13+ для показа уведомлений нужно разрешение POST_NOTIFICATIONS.
+    val notificationPermission = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (!granted) {
+            Toast.makeText(
+                context,
+                "Без разрешения на уведомления напоминание не появится",
+                Toast.LENGTH_LONG
+            ).show()
+        }
+        viewModel.onApplyClicked()
+    }
+
+    val onApplyClick = {
+        val needsPermission = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+
+        if (needsPermission) {
+            notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+        } else {
+            viewModel.onApplyClicked()
+        }
     }
 
     LaunchedEffect(viewModel) {
@@ -143,15 +179,46 @@ fun EditProfileScreen(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
             modifier = Modifier.fillMaxWidth()
         )
+        Spacer(Modifier.height(12.dp))
+        OutlinedTextField(
+            value = state.lessonTime,
+            onValueChange = viewModel::onLessonTimeChanged,
+            label = { Text("Время любимой пары") },
+            placeholder = { Text("HH:mm") },
+            singleLine = true,
+            isError = state.lessonTimeError != null,
+            supportingText = { Text(state.lessonTimeError ?: "Формат HH:mm, например 09:30") },
+            trailingIcon = {
+                IconButton(onClick = { showTimePicker = true }) {
+                    Icon(
+                        imageVector = Icons.Filled.AccessTime,
+                        contentDescription = "Выбрать время"
+                    )
+                }
+            },
+            modifier = Modifier.fillMaxWidth()
+        )
 
         Spacer(Modifier.height(24.dp))
 
         Button(
-            onClick = viewModel::onApplyClicked,
+            onClick = onApplyClick,
+            enabled = state.canSave,
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Готово")
         }
+    }
+
+    if (showTimePicker) {
+        LessonTimePickerDialog(
+            initialTime = LessonTime.parse(state.lessonTime) ?: LessonTime(hour = 9, minute = 0),
+            onConfirm = { hour, minute ->
+                showTimePicker = false
+                viewModel.onLessonTimePicked(hour, minute)
+            },
+            onDismiss = { showTimePicker = false }
+        )
     }
 
     if (showSourceDialog) {
